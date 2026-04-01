@@ -1,0 +1,16 @@
+day,sales,discount_pct,notes
+1,105,20,After 20% discount launch
+2,120,20,Weekend boost
+3,98,20,Weekday dip
+4,115,20,Mid-week recovery
+5,130,20,Pre-weekend spike
+6,88,20,Off-day
+7,142,20,Weekend peak
+8,110,20,Regular weekday
+9,127,20,Promotion active
+10,95,20,Rain - low footfall
+11,138,20,High traffic day
+12,122,20,Normal day
+13,145,20,Marketing campaign
+14,101,20,Slow afternoon
+15,116,20,Average day

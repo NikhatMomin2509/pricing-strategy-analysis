@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PriceIQ — Pricing Strategy Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="noise"></div>
+
+  <header>
+    <div class="logo">Price<span>IQ</span></div>
+    <nav>
+      <span class="badge">One-Sample t-Test</span>
+      <span class="badge">scipy.stats</span>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-label">Statistical Pricing Analysis</div>
+      <h1>Does your discount<br><em>actually</em> drive sales?</h1>
+      <p class="hero-sub">Enter your daily sales figures and let the numbers tell the truth. Powered by one-sample t-testing.</p>
+    </section>
+
+    <div class="layout">
+      <!-- INPUT PANEL -->
+      <div class="card input-card">
+        <div class="card-header">
+          <span class="step">01</span>
+          <h2>Sales Data Input</h2>
+        </div>
+
+        <div class="field-group">
+          <label>Daily Sales Data
+            <span class="hint">Enter comma-separated values (e.g. 105, 120, 98, 115)</span>
+          </label>
+          <textarea id="salesInput" rows="4" placeholder="105, 120, 98, 115, 130, 88, 142, 110, 127, 95"></textarea>
+          <div class="quick-load">
+            <button class="chip" onclick="loadSample('low')">📉 Low Impact</button>
+            <button class="chip" onclick="loadSample('medium')">📊 Medium Impact</button>
+            <button class="chip" onclick="loadSample('high')">📈 High Impact</button>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>Expected Average Sales (H₀)
+              <span class="hint">Baseline before discount</span>
+            </label>
+            <input type="number" id="expectedMean" value="100" min="1" step="1" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>
+            Price Discount: <strong id="discountLabel">20%</strong>
+          </label>
+          <div class="slider-wrap">
+            <span>0%</span>
+            <input type="range" id="discountSlider" min="0" max="60" value="20" step="1"
+              oninput="document.getElementById('discountLabel').textContent = this.value + '%'" />
+            <span>60%</span>
+          </div>
+          <div class="slider-ticks">
+            <span>No discount</span>
+            <span>Moderate</span>
+            <span>Aggressive</span>
+          </div>
+        </div>
+
+        <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">
+          <span class="btn-icon">⚡</span>
+          Run Statistical Analysis
+        </button>
+        <div id="error-msg" class="error-msg"></div>
+      </div>
+
+      <!-- RESULTS PANEL -->
+      <div class="card results-card" id="resultsPanel">
+        <div class="card-header">
+          <span class="step">02</span>
+          <h2>Analysis Results</h2>
+        </div>
+
+        <div class="placeholder-state" id="placeholderState">
+          <div class="placeholder-icon">📊</div>
+          <p>Run the analysis to see your results here.</p>
+        </div>
+
+        <div id="resultsContent" style="display:none;">
+          <div class="verdict-banner" id="verdictBanner">
+            <span id="verdictText"></span>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Mean Sales</div>
+              <div class="stat-value" id="statMean">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Std Deviation</div>
+              <div class="stat-value" id="statStd">—</div>
+            </div>
+            <div class="stat-card highlight">
+              <div class="stat-label">t-Statistic</div>
+              <div class="stat-value" id="statT">—</div>
+            </div>
+            <div class="stat-card highlight">
+              <div class="stat-label">p-Value (one-tailed)</div>
+              <div class="stat-value" id="statP">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Sample Size (n)</div>
+              <div class="stat-value" id="statN">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Sales Uplift</div>
+              <div class="stat-value" id="statUplift">—</div>
+            </div>
+          </div>
+
+          <div class="ci-bar-wrap">
+            <div class="ci-label">95% Confidence Interval</div>
+            <div class="ci-display">
+              <span id="ciLower">—</span>
+              <div class="ci-bar"><div class="ci-fill"></div></div>
+              <span id="ciUpper">—</span>
+            </div>
+          </div>
+
+          <div class="hypothesis-box">
+            <div class="hyp-row">
+              <span class="hyp-label">H₀ (Null):</span>
+              <span class="hyp-text">Mean sales = <span id="hypExpected">100</span></span>
+              <span class="hyp-status" id="h0Status"></span>
+            </div>
+            <div class="hyp-row">
+              <span class="hyp-label">H₁ (Alt):</span>
+              <span class="hyp-text">Mean sales > <span id="hypExpected2">100</span></span>
+              <span class="hyp-status" id="h1Status"></span>
+            </div>
+          </div>
+
+          <div class="optimal-box" id="optimalBox" style="display:none;">
+            <span class="optimal-icon">💡</span>
+            <span id="optimalText"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHART SECTION -->
+    <div class="card chart-card" id="chartCard" style="display:none;">
+      <div class="card-header">
+        <span class="step">03</span>
+        <h2>Data Visualization</h2>
+      </div>
+      <div class="chart-row">
+        <div class="chart-wrap">
+          <h3>Daily Sales vs Expected</h3>
+          <canvas id="salesChart"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <h3>Distribution Overview</h3>
+          <canvas id="distChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPLANATION SECTION -->
+    <div class="card explainer-card">
+      <div class="card-header">
+        <span class="step">📚</span>
+        <h2>How the t-Test Works</h2>
+      </div>
+      <div class="explainer-grid">
+        <div class="explainer-item">
+          <div class="explainer-num">1</div>
+          <h4>State Hypotheses</h4>
+          <p>H₀: μ = μ₀ (sales unchanged). H₁: μ > μ₀ (sales increased). We test whether data provides enough evidence to reject H₀.</p>
+        </div>
+        <div class="explainer-item">
+          <div class="explainer-num">2</div>
+          <h4>Calculate t-Statistic</h4>
+          <p><code>t = (x̄ − μ₀) / (s / √n)</code>. Measures how many standard errors the sample mean is from the expected mean.</p>
+        </div>
+        <div class="explainer-item">
+          <div class="explainer-num">3</div>
+          <h4>Find p-Value</h4>
+          <p>The probability of observing this extreme a result if H₀ were true. One-tailed: p = P(T > t). We use α = 0.05.</p>
+        </div>
+        <div class="explainer-item">
+          <div class="explainer-num">4</div>
+          <h4>Make Decision</h4>
+          <p>If p &lt; 0.05 → reject H₀ → price reduction significantly increased sales. If p ≥ 0.05 → insufficient evidence.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>PriceIQ · One-Sample t-Test · Built with Flask + scipy.stats · α = 0.05</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
