@@ -155,3 +155,4 @@ Or load from `sample_data/sample_sales.csv`.
 ## 📝 License
 
 MIT License — free to use for educational projects.
+Initial setup done
