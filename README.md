@@ -157,3 +157,4 @@ Or load from `sample_data/sample_sales.csv`.
 MIT License — free to use for educational projects.
 Initial setup done
 Initial setup 
+initiate css
